@@ -21,6 +21,16 @@ int filestart = 1;
 int Nfiles = 5;
 int ExpOrSim = 0; // 0(MC) or 1(data)
 
+// %%%%% define some historams %%%%%
+
+TH1F *hngen = new TH1F("hngen", "hngen", 15, 0, 15);
+TH1F *hnrec = new TH1F("hnrec", "hnrec", 10, 0, 10);
+TH2F *hhrvg = new TH2F("hhrvg", "hhrvg", 15, 0, 15, 10, 0, 10);
+TH1F *hpres = new TH1F("hpres", "hpres", 100, -0.2, 0.2);
+TH1F *hthetares = new TH1F("hthetares", "hthetares", 100, -0.1, 0.1);
+TH1F *hphires = new TH1F("hphires", "hphires", 100, -0.2, 0.2);
+// %%%% end define historams %%%%%%%
+
 // %%%%% some cut values %%%%%
 float WMin = 2.05;
 float yMax = 0.85; // default value (for when yCut_strict = 0)
@@ -149,6 +159,10 @@ if((mcid[1] == 211 && mcid[2] == 2112) || (mcid[1] == 2112 && mcid[2] == 211)) g
 
 if(genExclusiveEvent == 0)
 {
+	hngen->Fill(mcnentr);
+	hnrec->Fill(gpart);
+	hhrvg->Fill(mcnentr, gpart);
+
 	cout<<"event #"<<i<<endl;
 	
 	cout<<"  generated particles:"<<endl;
@@ -168,7 +182,52 @@ if(genExclusiveEvent == 0)
 		cout<<"    q="<<q[ir]<<", p="<<p[ir]<<", tHetA="<<(180.0/3.14159)*vec3.Theta()<<", phi="<<(180.0/3.14159)*vec3.Phi()<<endl;
 	}
 
+   cout << "  comparison of gen and rec:" << endl;
+   for(int ig = 0; ig < mcnentr; ig++) {
+      for(int ir = 0; ir < gpart; ir++) {
+         cout << "    g" << ig << " r" << ir << " comparison: ";
+        
+	
+ 	 TVector3 rvec3 = TVector3(p[ir]*cx[ir], p[ir]*cy[ir],p[ir]*cz[ir]);
+	 TVector3 gvec3 = TVector3(1.0, 1.0, 1.0);
+	 gvec3.SetTheta((3.14159/180.0)*mctheta[ig]);
+	 gvec3.SetPhi((3.14159/180.0)*mcphi[ig]);
+	 gvec3.SetMag(mcp[ig]);
+
+	 if(fabs(mcp[ig] - p[ir]) < 0.6 && fabs(gvec3.Theta()-rvec3.Theta()) < 0.02 && fabs(gvec3.Phi()-rvec3.Phi()) < 0.06) cout << "the momenta are close" << endl;
+         else cout << "the momenta are not close" << endl;
+        // cout << "(" << mcp[ig] << ", " << p[ir] << ")" << endl;
+	 
+
+	//TVector3 rvec3 = TVector3(p[ir]*cx[ir], p[ir]*cy[ir],p[ir]*cz[ir]);
+
+	// if(fabs(mctheta[ig]-(180.0)/3.14159)*rvec3.Theta()< 0.015) cout <<  "theta is close";
+	// else cout << "theta is not close";
+	// cout << "(" << mctheta[ig] <<", " << (180.0/3.14159)*rvec3.Theta() << ")" << endl;
+
+	 //if(fabs((180.0/3.14159)*rvec3.Phi()-(180.0/3.14159)*rvec3.Phi()< 0.05)) cout << "Phi close";
+	// else cout << "Phi is not close";
+	// cout << "(" << (180.0/3.14159)*rvec3.Phi() << ", " << (180.0/3.14159)*rvec3.Phi() << ")" << endl;
+
+
+	hpres->Fill(gvec3.Mag()-rvec3.Mag());
+	hthetares->Fill(gvec3.Theta()-rvec3.Theta());
+	hphires->Fill(gvec3.Phi()-rvec3.Phi());
+      }   
+   } 
+
 } // end if(genExclusiveEvent == 0)
 cout<<endl;
 } // end of loop over entries
+
+hngen->Draw();
+new TCanvas();
+hnrec->Draw();
+new TCanvas();
+hhrvg->Draw("colz");
+hpres->Draw();
+new TCanvas();
+hthetares->Draw();
+new TCanvas();
+hphires->Draw();
 } // end of program
